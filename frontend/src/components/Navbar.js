@@ -1,0 +1,148 @@
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, Search } from 'lucide-react';
+import { useThemeStore, useSystemStore } from '../store/useStore';
+
+const navLinks = [
+  { name: 'Identity', href: '#identity', code: '01' },
+  { name: 'Reconstruction', href: '#reconstruction', code: '02' },
+  { name: 'Archive', href: '#modules', code: '03' },
+  { name: 'Matrix', href: '#matrix', code: '04' },
+  { name: 'Transmission', href: '#transmission', code: '05' },
+];
+
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useThemeStore((state) => state.theme);
+  const setCommandOpen = useSystemStore((state) => state.setCommandOpen);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const colors = useMemo(() => ({
+    surface: theme === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(12,12,18,0.9)',
+    border: theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+    bg: theme === 'light' ? 'rgba(248,249,252,0.98)' : 'rgba(8,8,12,0.98)',
+  }), [theme]);
+
+  return (
+    <>
+      <motion.nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'py-4' : 'py-8'}`}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        data-testid="navbar"
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <div
+            className={`flex items-center justify-between transition-all duration-500 rounded-full px-6 py-3 ${scrolled ? 'glass border-astreon-border/50' : 'bg-transparent border-transparent'}`}
+          >
+            <a href="#hero" className="font-display text-base lg:text-lg font-black tracking-tighter text-astreon-text" data-testid="navbar-logo">
+              ASTREON
+            </a>
+
+            {/* Desktop */}
+            <div className="hidden lg:flex items-center gap-10">
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="nav-link-premium group flex items-center gap-2 text-[10px] font-mono tracking-[0.2em] text-astreon-text-muted hover:text-astreon-text transition-colors duration-300 uppercase px-1 py-1"
+                  data-testid={`nav-link-${link.name.toLowerCase()}`}
+                >
+                  <span className="opacity-40 group-hover:opacity-100 transition-opacity text-astreon-accent">{link.code}</span>
+                  <span>{link.name}</span>
+                </a>
+              ))}
+            </div>
+
+            <div className="hidden lg:block">
+              <a href="#transmission" className="border border-astreon-border/30 px-6 py-2 rounded-full text-[9px] font-mono tracking-widest uppercase text-astreon-text hover:border-astreon-accent/50 hover:bg-astreon-accent/5 transition-all duration-300" data-testid="navbar-cta">
+                Establish Link
+              </a>
+            </div>
+
+            {/* Mobile Actions Overlay */}
+            <div className="flex items-center space-x-4 lg:hidden">
+              <button 
+                onClick={() => setCommandOpen(true)}
+                className="p-1.5 text-astreon-text hover:text-astreon-accent transition-colors"
+                aria-label="Universal Search"
+              >
+                <Search className="w-5 h-5" />
+              </button>
+              <button
+                className="p-1.5"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                data-testid="mobile-menu-button"
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            data-testid="mobile-menu"
+          >
+            <div 
+              className="absolute inset-0 backdrop-blur-lg"
+              style={{ background: colors.bg }}
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.div
+              className="relative h-full flex flex-col items-center justify-center gap-6"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              {navLinks.map((link, i) => (
+                <motion.a
+                  key={link.name}
+                  href={link.href}
+                  className="flex items-center gap-2 text-xl font-display font-semibold"
+                  onClick={() => setMobileOpen(false)}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + i * 0.04 }}
+                  data-testid={`mobile-nav-link-${link.name.toLowerCase()}`}
+                >
+                  <span className="font-mono text-xs opacity-40">{link.code}</span>
+                  {link.name}
+                </motion.a>
+              ))}
+              <motion.a
+                href="#transmission"
+                className="mt-3 animus-button text-sm"
+                onClick={() => setMobileOpen(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25 }}
+                data-testid="mobile-cta"
+              >
+                <span>Contact</span>
+              </motion.a>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+export default Navbar;
